@@ -31,6 +31,49 @@ Return ONLY JSON matching:
 "claims":[{"text":"","kind":"","sceneIndex":1,"sourceType":"UNVERIFIED","status":"NEEDS_SOURCE","source":""}]}
 visualType is one of STOCK_VIDEO, STOCK_IMAGE, AI_IMAGE, AI_VIDEO, ORIGINAL_CHART, INFOGRAPHIC, MAP, TIMELINE, SCREENSHOT, ARCHIVAL, COMPANY_DOCUMENT, NEWS_HEADLINE, MOTION_GRAPHIC, ABSTRACT_CINEMATIC.`;
 
+const PlanSchema = z.object({
+  scenes: z.array(
+    z.object({
+      narration: z.string().default(""),
+      durationSec: z.number().default(8),
+      subject: z.string().default(""),
+      objective: z.string().default(""),
+      visualType: z.string().default("STOCK_VIDEO"),
+      priority: z.string().default("MEDIUM"),
+      reason: z.string().default(""),
+      keywords: z.array(z.string()).default([]),
+      motionPlan: z.string().default("ANIMATE_IN_EDITOR"),
+      motionReason: z.string().default(""),
+      animationStyle: z.string().default(""),
+      camera: z.string().default(""),
+      lighting: z.string().default(""),
+      mood: z.string().default(""),
+      composition: z.string().default(""),
+      colorDirection: z.string().default(""),
+      transition: z.string().default(""),
+      aiPrompt: z.string().default(""),
+      negativePrompt: z.string().default(""),
+      continuity: z.string().default(""),
+      licenseNotes: z.string().default(""),
+      disclosureReview: z.boolean().default(false),
+    }),
+  ),
+  claims: z
+    .array(
+      z.object({
+        text: z.string().default(""),
+        kind: z.string().default(""),
+        sceneIndex: z.number().default(1),
+        sourceType: z.string().default("UNVERIFIED"),
+        status: z.string().default("NEEDS_SOURCE"),
+        source: z.string().default(""),
+      }),
+    )
+    .default([]),
+});
+
+export type AiPlan = z.infer<typeof PlanSchema>;
+
 export const analyzeScript = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Input.parse(data))
   .handler(async ({ data }) => {
@@ -102,8 +145,5 @@ ${data.script}
     const start = text.indexOf("{");
     const end = text.lastIndexOf("}");
     if (start === -1 || end === -1) throw new Error("AI returned an unreadable plan. Try again.");
-    return JSON.parse(text.slice(start, end + 1)) as {
-      scenes: Record<string, unknown>[];
-      claims?: Record<string, unknown>[];
-    };
+    return PlanSchema.parse(JSON.parse(text.slice(start, end + 1)));
   });
