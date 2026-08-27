@@ -102,7 +102,10 @@ export function SceneDetail({ project, scene, onClose, update }: Props) {
 
   async function runSearch(term?: string) {
     const q = (term ?? query ?? "").trim() || scene!.keywords.join(" ");
-    if (!q) return toast.error("Add a search term first.");
+    if (!q) {
+      toast.error("Add a search term first.");
+      return;
+    }
     setQuery(q);
     setLoading(true);
     try {
