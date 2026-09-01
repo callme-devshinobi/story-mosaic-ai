@@ -76,7 +76,10 @@ function ProjectLauncher({ onCreated }: { onCreated: (id: string) => void }) {
   const [script, setScript] = useState("");
 
   const submit = () => {
-    if (!name.trim()) return toast.error("Name the project first.");
+    if (!name.trim()) {
+      toast.error("Name the project first.");
+      return;
+    }
     const p = createProject({
       name,
       videoTitle: title || name,
@@ -210,7 +213,10 @@ function Studio({ projectId, projects, onSelect }: { projectId: string; projects
   if (!loaded || !project) return null;
 
   const runAnalysis = async () => {
-    if (project.script.trim().length < 40) return toast.error("Add a script of at least 40 characters first.");
+    if (project.script.trim().length < 40) {
+      toast.error("Add a script of at least 40 characters first.");
+      return;
+    }
     setAnalyzing(true);
     try {
       const result = await analyzeScript({ data: {
@@ -250,11 +256,11 @@ function Studio({ projectId, projects, onSelect }: { projectId: string; projects
         <aside className={`${mobileNav ? 'fixed inset-y-16 left-0 z-20 flex' : 'hidden'} w-64 shrink-0 flex-col border-r border-border bg-sidebar p-3 lg:sticky lg:top-16 lg:flex lg:h-[calc(100vh-4rem)]`}>
           <div className="label-caps mb-2 px-3">Production</div>
           <NavItem icon={<LayoutDashboard />} label="Overview" active={view === 'overview'} onClick={() => { setView('overview'); setMobileNav(false); }} />
-          <NavItem icon={<ListVideo />} label="Scene board" active={view === 'scenes'} count={project.scenes.length || undefined} onClick={() => { setView('scenes'); setMobileNav(false); }} />
-          <NavItem icon={<Library />} label="Asset library" active={view === 'assets'} count={project.assets.length || undefined} onClick={() => { setView('assets'); setMobileNav(false); }} />
+          <NavItem icon={<ListVideo />} label="Scene board" active={view === 'scenes'} count={project.scenes.length} onClick={() => { setView('scenes'); setMobileNav(false); }} />
+          <NavItem icon={<Library />} label="Asset library" active={view === 'assets'} count={project.assets.length} onClick={() => { setView('assets'); setMobileNav(false); }} />
           <NavItem icon={<BarChart3 />} label="Timeline" active={view === 'timeline'} onClick={() => { setView('timeline'); setMobileNav(false); }} />
           <div className="label-caps mb-2 mt-7 px-3">Review</div>
-          <NavItem icon={<BookOpenCheck />} label="Fact check" active={view === 'factcheck'} count={project.claims.filter(c => c.status !== 'VERIFIED').length || undefined} onClick={() => { setView('factcheck'); setMobileNav(false); }} />
+          <NavItem icon={<BookOpenCheck />} label="Fact check" active={view === 'factcheck'} count={project.claims.filter(c => c.status !== 'VERIFIED').length} onClick={() => { setView('factcheck'); setMobileNav(false); }} />
           <NavItem icon={<Check />} label="Quality control" active={view === 'qc'} onClick={() => { setView('qc'); setMobileNav(false); }} />
           <div className="mt-auto border-t border-border pt-3">
             {projects.length > 1 ? projects.filter((p) => p.id !== project.id).map((p) => <NavItem key={p.id} icon={<FolderOpen />} label={`Open ${p.name}`} onClick={() => { onSelect(p.id); setMobileNav(false); }} />) : null}
@@ -285,11 +291,11 @@ function NavItem({ icon, label, count, active, onClick }: { icon: React.ReactNod
 
 function normalizeScene(raw: Record<string, unknown>, index: number): Scene {
   const validTypes = [...AI_TYPES, ...STOCK_TYPES, ...GRAPHIC_TYPES, 'ABSTRACT_CINEMATIC'] as string[];
-  const visualType = validTypes.includes(String(raw.visualType)) ? String(raw.visualType) as VisualType : 'STOCK_VIDEO';
+  const visualType = validTypes.includes(String(raw['visualType'])) ? String(raw['visualType']) as VisualType : 'STOCK_VIDEO';
   const validMotion = ['KEEP_STATIC', 'ANIMATE_IN_EDITOR', 'CONVERT_TO_VIDEO'];
   const validPriority = ['HIGH', 'MEDIUM', 'LOW'];
   return {
-    id: uid('scene'), index: index + 1, narration: String(raw.narration || ''), durationSec: Math.max(1, Number(raw.durationSec) || 8), subject: String(raw.subject || `Scene ${index + 1}`), objective: String(raw.objective || ''), visualType,
-    priority: validPriority.includes(String(raw.priority)) ? String(raw.priority) as Scene['priority'] : 'MEDIUM', reason: String(raw.reason || ''), keywords: Array.isArray(raw.keywords) ? raw.keywords.map(String) : [], needsAi: AI_TYPES.includes(visualType), motionPlan: validMotion.includes(String(raw.motionPlan)) ? String(raw.motionPlan) as Scene['motionPlan'] : 'ANIMATE_IN_EDITOR', motionReason: String(raw.motionReason || ''), animationStyle: String(raw.animationStyle || ''), camera: String(raw.camera || ''), lighting: String(raw.lighting || ''), mood: String(raw.mood || ''), composition: String(raw.composition || ''), colorDirection: String(raw.colorDirection || ''), transition: String(raw.transition || ''), aiPrompt: String(raw.aiPrompt || ''), negativePrompt: String(raw.negativePrompt || ''), continuity: String(raw.continuity || ''), licenseNotes: String(raw.licenseNotes || 'Verify current commercial-use rights before publishing.'), disclosureReview: Boolean(raw.disclosureReview), status: 'PENDING', assetIds: [],
+    id: uid('scene'), index: index + 1, narration: String(raw['narration'] || ''), durationSec: Math.max(1, Number(raw['durationSec']) || 8), subject: String(raw['subject'] || `Scene ${index + 1}`), objective: String(raw['objective'] || ''), visualType,
+    priority: validPriority.includes(String(raw['priority'])) ? String(raw['priority']) as Scene['priority'] : 'MEDIUM', reason: String(raw['reason'] || ''), keywords: Array.isArray(raw['keywords']) ? raw['keywords'].map(String) : [], needsAi: AI_TYPES.includes(visualType), motionPlan: validMotion.includes(String(raw['motionPlan'])) ? String(raw['motionPlan']) as Scene['motionPlan'] : 'ANIMATE_IN_EDITOR', motionReason: String(raw['motionReason'] || ''), animationStyle: String(raw['animationStyle'] || ''), camera: String(raw['camera'] || ''), lighting: String(raw['lighting'] || ''), mood: String(raw['mood'] || ''), composition: String(raw['composition'] || ''), colorDirection: String(raw['colorDirection'] || ''), transition: String(raw['transition'] || ''), aiPrompt: String(raw['aiPrompt'] || ''), negativePrompt: String(raw['negativePrompt'] || ''), continuity: String(raw['continuity'] || ''), licenseNotes: String(raw['licenseNotes'] || 'Verify current commercial-use rights before publishing.'), disclosureReview: Boolean(raw['disclosureReview']), status: 'PENDING', assetIds: [],
   };
 }
