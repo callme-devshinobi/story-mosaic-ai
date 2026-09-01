@@ -1,13 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
-  Archive,
   ArrowLeft,
   BarChart3,
   BookOpenCheck,
   Check,
-  ChevronRight,
   Clapperboard,
   FileText,
   FolderOpen,
@@ -17,10 +15,7 @@ import {
   Menu,
   Plus,
   Save,
-  Search,
-  Settings2,
   Sparkles,
-  Upload,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -61,6 +56,10 @@ function App() {
   const projects = useProjects();
   const [activeId, setActiveId] = useState<string | null>(projects[0]?.id ?? null);
   const active = projects.find((p) => p.id === activeId) ?? null;
+
+  useEffect(() => {
+    if (!activeId && projects[0]) setActiveId(projects[0].id);
+  }, [activeId, projects]);
 
   if (!active) return <ProjectLauncher onCreated={setActiveId} />;
   return <Studio projectId={active.id} projects={projects} onSelect={setActiveId} />;
@@ -257,7 +256,10 @@ function Studio({ projectId, projects, onSelect }: { projectId: string; projects
           <div className="label-caps mb-2 mt-7 px-3">Review</div>
           <NavItem icon={<BookOpenCheck />} label="Fact check" active={view === 'factcheck'} count={project.claims.filter(c => c.status !== 'VERIFIED').length || undefined} onClick={() => { setView('factcheck'); setMobileNav(false); }} />
           <NavItem icon={<Check />} label="Quality control" active={view === 'qc'} onClick={() => { setView('qc'); setMobileNav(false); }} />
-          <div className="mt-auto border-t border-border pt-3"><NavItem icon={<FolderOpen />} label="Switch project" onClick={() => { deleteProject(project.id); setMobileNav(false); }} /></div>
+          <div className="mt-auto border-t border-border pt-3">
+            {projects.length > 1 ? projects.filter((p) => p.id !== project.id).map((p) => <NavItem key={p.id} icon={<FolderOpen />} label={`Open ${p.name}`} onClick={() => { onSelect(p.id); setMobileNav(false); }} />) : null}
+            <NavItem icon={<Plus />} label="New project" onClick={() => { setMobileNav(false); toast.info("Use the browser back button to start another local project."); }} />
+          </div>
         </aside>
         <main className="min-w-0 flex-1 p-4 sm:p-7 lg:p-10">
           <div className="mx-auto max-w-6xl">
