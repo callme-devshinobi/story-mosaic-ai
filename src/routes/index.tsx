@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -206,6 +207,7 @@ function Brand() {
 
 function Studio({ projectId, projects, onSelect }: { projectId: string; projects: Project[]; onSelect: (id: string) => void }) {
   const { project, loaded, update } = useProject(projectId);
+  const analyzeScriptFn = useServerFn(analyzeScript);
   const [view, setView] = useState<View>("overview");
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -219,7 +221,7 @@ function Studio({ projectId, projects, onSelect }: { projectId: string; projects
     }
     setAnalyzing(true);
     try {
-      const result = await analyzeScript({ data: {
+       const result = await analyzeScriptFn({ data: {
         script: project.script,
         title: project.videoTitle,
         category: project.category,
