@@ -389,7 +389,50 @@ export function QualityControl({ project }: { project: Project }) {
             </div>
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {videoUrl ? (
+            <Button asChild>
+              <a
+                href={videoUrl}
+                download={`${(project.name || "documentary").replace(/\W+/g, "_")}_Silent.${videoExt}`}
+              >
+                <Download className="size-4" /> Download silent video
+              </a>
+            </Button>
+          ) : (
+            <Button disabled={!!errors || rendering} onClick={onRenderVideo}>
+              <Clapperboard className="size-4" />
+              {rendering ? "Rendering…" : "Render silent video"}
+            </Button>
+          )}
+          {rendering ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                abortRef.current?.abort();
+                toast.info("Export cancelled.");
+              }}
+            >
+              <X className="size-4" /> Cancel
+            </Button>
+          ) : null}
+        </div>
+        {rendering ? (
+          <div className="w-full">
+            <Progress value={pct} />
+            <div className="mt-1 text-xs text-muted-foreground">
+              {phase} — {pct}%. Rendering runs in real time; keep this tab visible.
+            </div>
+          </div>
+        ) : null}
+        {videoUrl ? (
+          <div className="w-full text-xs text-muted-foreground">
+            Rendered {videoExt.toUpperCase()} · silent · import into CapCut for voiceover, music and
+            polish. Render again after changing scenes.
+          </div>
+        ) : null}
         <Button
+          variant="secondary"
           disabled={!!errors}
           onClick={() => {
             const name = `${(project.name || "documentary").replace(/\W+/g, "_")}_Silent.json`;
