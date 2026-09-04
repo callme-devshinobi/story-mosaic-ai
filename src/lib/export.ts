@@ -209,19 +209,27 @@ export async function renderSilentVideo(
       }
       let i = scenes.length - 1;
       for (let k = 0; k < scenes.length; k++) {
-        if (t < starts[k] + Math.max(0.5, scenes[k].durationSec || 0.5)) {
+        const start = starts[k] ?? 0;
+        const dur = Math.max(0.5, scenes[k]?.durationSec || 0.5);
+        if (t < start + dur) {
           i = k;
           break;
         }
       }
-      const local = t - starts[i];
-      drawScene(ctx, items[i], media[i], W, H, local);
+      const item = items[i];
+      if (!item) {
+        requestAnimationFrame(frame);
+        return;
+      }
+      const local = t - (starts[i] ?? 0);
+      drawScene(ctx, item, media[i] ?? null, W, H, local);
       // Crossfade in from the previous scene unless the scene requests a hard cut.
-      const transition = (items[i].scene.transition || "").toLowerCase();
-      if (i > 0 && local < FADE && !transition.includes("cut")) {
-        const prevDur = Math.max(0.5, scenes[i - 1].durationSec || 0.5);
+      const transition = (item.scene.transition || "").toLowerCase();
+      const prev = items[i - 1];
+      if (prev && local < FADE && !transition.includes("cut")) {
+        const prevDur = Math.max(0.5, prev.scene.durationSec || 0.5);
         ctx.globalAlpha = 1 - local / FADE;
-        drawScene(ctx, items[i - 1], media[i - 1], W, H, prevDur);
+        drawScene(ctx, prev, media[i - 1] ?? null, W, H, prevDur);
         ctx.globalAlpha = 1;
       }
       const pct = Math.round((t / total) * 100);
