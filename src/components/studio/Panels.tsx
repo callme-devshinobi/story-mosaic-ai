@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fmtDuration, projectStats, runQc } from "@/lib/production";
+import { renderSilentVideo } from "@/lib/export";
 import { mediaDuration } from "@/lib/files";
 import type { Project } from "@/lib/types";
 import { StatTile } from "./primitives";
