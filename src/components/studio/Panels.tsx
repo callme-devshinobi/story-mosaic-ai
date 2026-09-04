@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { AlertTriangle, CheckCircle2, FileWarning, Music } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { AlertTriangle, CheckCircle2, Clapperboard, Download, FileWarning, Music, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
