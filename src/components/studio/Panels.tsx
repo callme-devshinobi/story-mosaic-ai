@@ -1,11 +1,12 @@
-import { useMemo } from "react";
-import { AlertTriangle, CheckCircle2, FileWarning, Music } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { AlertTriangle, CheckCircle2, Clapperboard, Download, FileWarning, Music, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fmtDuration, projectStats, runQc } from "@/lib/production";
+import { renderSilentVideo } from "@/lib/export";
 import { mediaDuration } from "@/lib/files";
 import type { Project } from "@/lib/types";
 import { StatTile } from "./primitives";
@@ -328,6 +329,44 @@ export function QualityControl({ project }: { project: Project }) {
   const errors = issues.filter((i) => i.level === "error").length;
   const ready = issues.length === 0;
 
+  const [rendering, setRendering] = useState(false);
+  const [pct, setPct] = useState(0);
+  const [phase, setPhase] = useState("");
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoExt, setVideoExt] = useState("webm");
+  const abortRef = useRef<AbortController | null>(null);
+
+  async function onRenderVideo() {
+    setRendering(true);
+    setPct(0);
+    setPhase("Preparing…");
+    setVideoUrl((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return null;
+    });
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const { blob, ext } = await renderSilentVideo(
+        project,
+        (p, label) => {
+          setPct(p);
+          setPhase(label);
+        },
+        controller.signal,
+      );
+      setVideoExt(ext);
+      setVideoUrl(URL.createObjectURL(blob));
+      toast.success("Silent video rendered. Download it and finish in CapCut.");
+    } catch (e) {
+      const msg = (e as Error).message;
+      if (msg !== "Export cancelled.") toast.error(msg);
+    } finally {
+      setRendering(false);
+      abortRef.current = null;
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div
@@ -350,7 +389,50 @@ export function QualityControl({ project }: { project: Project }) {
             </div>
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {videoUrl ? (
+            <Button asChild>
+              <a
+                href={videoUrl}
+                download={`${(project.name || "documentary").replace(/\W+/g, "_")}_Silent.${videoExt}`}
+              >
+                <Download className="size-4" /> Download silent video
+              </a>
+            </Button>
+          ) : (
+            <Button disabled={!!errors || rendering} onClick={onRenderVideo}>
+              <Clapperboard className="size-4" />
+              {rendering ? "Rendering…" : "Render silent video"}
+            </Button>
+          )}
+          {rendering ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                abortRef.current?.abort();
+                toast.info("Export cancelled.");
+              }}
+            >
+              <X className="size-4" /> Cancel
+            </Button>
+          ) : null}
+        </div>
+        {rendering ? (
+          <div className="w-full">
+            <Progress value={pct} />
+            <div className="mt-1 text-xs text-muted-foreground">
+              {phase} — {pct}%. Rendering runs in real time; keep this tab visible.
+            </div>
+          </div>
+        ) : null}
+        {videoUrl ? (
+          <div className="w-full text-xs text-muted-foreground">
+            Rendered {videoExt.toUpperCase()} · silent · import into CapCut for voiceover, music and
+            polish. Render again after changing scenes.
+          </div>
+        ) : null}
         <Button
+          variant="secondary"
           disabled={!!errors}
           onClick={() => {
             const name = `${(project.name || "documentary").replace(/\W+/g, "_")}_Silent.json`;
