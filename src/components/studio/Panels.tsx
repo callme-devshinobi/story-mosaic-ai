@@ -329,6 +329,44 @@ export function QualityControl({ project }: { project: Project }) {
   const errors = issues.filter((i) => i.level === "error").length;
   const ready = issues.length === 0;
 
+  const [rendering, setRendering] = useState(false);
+  const [pct, setPct] = useState(0);
+  const [phase, setPhase] = useState("");
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoExt, setVideoExt] = useState("webm");
+  const abortRef = useRef<AbortController | null>(null);
+
+  async function onRenderVideo() {
+    setRendering(true);
+    setPct(0);
+    setPhase("Preparing…");
+    setVideoUrl((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return null;
+    });
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const { blob, ext } = await renderSilentVideo(
+        project,
+        (p, label) => {
+          setPct(p);
+          setPhase(label);
+        },
+        controller.signal,
+      );
+      setVideoExt(ext);
+      setVideoUrl(URL.createObjectURL(blob));
+      toast.success("Silent video rendered. Download it and finish in CapCut.");
+    } catch (e) {
+      const msg = (e as Error).message;
+      if (msg !== "Export cancelled.") toast.error(msg);
+    } finally {
+      setRendering(false);
+      abortRef.current = null;
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div
