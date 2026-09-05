@@ -3,8 +3,10 @@ import type { Project, Scene } from "./types";
 
 interface RenderItem {
   scene: Scene;
+  assetId: string | null;
   url: string | null;
   kind: "video" | "image" | null;
+  durationSec: number;
 }
 
 type MediaEl = HTMLImageElement | HTMLVideoElement | null;
@@ -33,22 +35,40 @@ function pickMime(): { mime: string; ext: string } {
 async function resolveItems(project: Project): Promise<RenderItem[]> {
   const items: RenderItem[] = [];
   for (const scene of project.scenes) {
-    const asset = project.assets.find((a) => scene.assetIds.includes(a.id));
-    let url: string | null = null;
-    let kind: RenderItem["kind"] = null;
-    if (asset) {
-      if (asset.hasFile) url = await getFileUrl(asset.id);
-      if (!url) url = asset.sourceUrl || asset.previewUrl || null;
-      if (url) {
-        kind =
-          asset.category.includes("VIDEO") || /\.(mp4|webm|mov)(\?|#|$)/i.test(url)
-            ? "video"
-            : "image";
+    const assets = project.assets.filter((asset) => scene.assetIds.includes(asset.id));
+    const selectedAssets = assets.length ? assets : [null];
+    const durationSec = Math.max(0.1, (scene.durationSec || 0.5) / selectedAssets.length);
+
+    for (const asset of selectedAssets) {
+      let url: string | null = null;
+      let kind: RenderItem["kind"] = null;
+      if (asset) {
+        if (asset.hasFile) url = await getFileUrl(asset.id);
+        if (!url && asset.sourceUrl && !isProviderPageUrl(asset.sourceUrl)) {
+          url = asset.sourceUrl;
+        }
+        // Older projects stored a provider page URL. Use the poster as an image fallback
+        // rather than trying to load the HTML page into a video element.
+        if (!url) url = asset.previewUrl || null;
+        if (url) {
+          kind =
+            asset.category.includes("VIDEO") && !isImageUrl(url)
+              ? "video"
+              : "image";
+        }
       }
+      items.push({ scene, assetId: asset?.id ?? null, url, kind, durationSec });
     }
-    items.push({ scene, url, kind });
   }
   return items;
+}
+
+function isProviderPageUrl(url: string) {
+  return /^https?:\/\/(www\.)?(pexels|pixabay)\.com\//i.test(url);
+}
+
+function isImageUrl(url: string) {
+  return /\.(avif|gif|jpe?g|png|webp)(\?|#|$)/i.test(url);
 }
 
 function loadMedia(item: RenderItem): Promise<MediaEl> {
@@ -124,7 +144,7 @@ function drawScene(
   H: number,
   localT: number,
 ) {
-  const dur = Math.max(0.1, item.scene.durationSec);
+  const dur = Math.max(0.1, item.durationSec);
   const p = Math.min(1, Math.max(0, localT / dur));
   const dir = item.scene.index % 2 === 0 ? 1 : -1;
   // Ken Burns: slow zoom-in with alternating drift.
@@ -187,7 +207,15 @@ export async function renderSilentVideo(
   let acc = 0;
   for (const s of scenes) {
     starts.push(acc);
-    acc += Math.max(0.5, s.durationSec || 0.5);
+    acc += Math.max(0.1, s.durationSec || 0.5);
+  }
+  // The expanded item list can contain more than one selected asset per scene.
+  // Build timing from those exact render items so every selected asset appears.
+  starts.length = 0;
+  acc = 0;
+  for (const item of items) {
+    starts.push(acc);
+    acc += item.durationSec;
   }
   const total = acc;
   const FADE = 0.6;
@@ -210,9 +238,10 @@ export async function renderSilentVideo(
       let i = scenes.length - 1;
       for (let k = 0; k < scenes.length; k++) {
         const start = starts[k] ?? 0;
-        const dur = Math.max(0.5, scenes[k]?.durationSec || 0.5);
-        if (t < start + dur) {
-          i = k;
+         const item = items[k];
+         const dur = item?.durationSec ?? 0.1;
+         if (t < start + dur) {
+           i = k;
           break;
         }
       }
@@ -227,7 +256,7 @@ export async function renderSilentVideo(
       const transition = (item.scene.transition || "").toLowerCase();
       const prev = items[i - 1];
       if (prev && local < FADE && !transition.includes("cut")) {
-        const prevDur = Math.max(0.5, prev.scene.durationSec || 0.5);
+         const prevDur = prev.durationSec;
         ctx.globalAlpha = 1 - local / FADE;
         drawScene(ctx, prev, media[i - 1] ?? null, W, H, prevDur);
         ctx.globalAlpha = 1;
