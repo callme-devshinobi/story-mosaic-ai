@@ -3,7 +3,6 @@ import type { Project, Scene } from "./types";
 
 interface RenderItem {
   scene: Scene;
-  assetId: string | null;
   url: string | null;
   kind: "video" | "image" | null;
   durationSec: number;
@@ -35,7 +34,9 @@ function pickMime(): { mime: string; ext: string } {
 async function resolveItems(project: Project): Promise<RenderItem[]> {
   const items: RenderItem[] = [];
   for (const scene of project.scenes) {
-    const assets = project.assets.filter((asset) => scene.assetIds.includes(asset.id));
+    const assets = scene.assetIds
+      .map((assetId) => project.assets.find((asset) => asset.id === assetId))
+      .filter((asset): asset is Project["assets"][number] => Boolean(asset));
     const selectedAssets = assets.length ? assets : [null];
     const durationSec = Math.max(0.1, (scene.durationSec || 0.5) / selectedAssets.length);
 
@@ -56,7 +57,7 @@ async function resolveItems(project: Project): Promise<RenderItem[]> {
               : "image";
         }
       }
-      items.push({ scene, assetId: asset?.id ?? null, url, kind, durationSec });
+      items.push({ scene, url, kind, durationSec });
     }
   }
   return items;
@@ -228,13 +229,13 @@ export async function renderSilentVideo(
         resolve();
         return;
       }
-      let i = scenes.length - 1;
-       for (let k = 0; k < items.length; k++) {
+      let i = items.length - 1;
+      for (let k = 0; k < items.length; k++) {
         const start = starts[k] ?? 0;
-         const item = items[k];
-         const dur = item?.durationSec ?? 0.1;
-         if (t < start + dur) {
-           i = k;
+        const item = items[k];
+        const dur = item?.durationSec ?? 0.1;
+        if (t < start + dur) {
+          i = k;
           break;
         }
       }
@@ -249,7 +250,7 @@ export async function renderSilentVideo(
       const transition = (item.scene.transition || "").toLowerCase();
       const prev = items[i - 1];
       if (prev && local < FADE && !transition.includes("cut")) {
-         const prevDur = prev.durationSec;
+        const prevDur = prev.durationSec;
         ctx.globalAlpha = 1 - local / FADE;
         drawScene(ctx, prev, media[i - 1] ?? null, W, H, prevDur);
         ctx.globalAlpha = 1;
@@ -257,7 +258,14 @@ export async function renderSilentVideo(
       const pct = Math.round((t / total) * 100);
       if (pct !== lastPct) {
         lastPct = pct;
-        onProgress(pct, `Rendering scene ${i + 1} of ${scenes.length}`);
+         onProgress(
+           pct,
+           `Rendering scene ${item.scene.index} of ${scenes.length}${
+             items.filter((candidate) => candidate.scene.id === item.scene.id).length > 1
+               ? " · selected clip"
+               : ""
+           }`,
+         );
       }
       requestAnimationFrame(frame);
     };
