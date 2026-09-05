@@ -264,9 +264,9 @@ export function SceneDetail({ project, scene, onClose, update }: Props) {
                               name: `${r.provider} ${r.kind} ${r.id}`,
                               category: r.kind === "video" ? "STOCK_VIDEO" : "STOCK_IMAGE",
                               source: r.provider,
-                              // Keep the direct media file URL for the renderer. The page URL
-                              // opens the provider's listing page and cannot be rendered as video.
-                              sourceUrl: r.downloadUrl,
+                              sourceUrl: r.pageUrl,
+                              // Keep the direct media file URL separately from the provider page.
+                              downloadUrl: r.downloadUrl,
                               previewUrl: r.previewUrl,
                               license: r.license,
                               commercialUse: "NEEDS_REVIEW",

@@ -68,6 +68,8 @@ export interface Asset {
   category: AssetCategory;
   source: string;
   sourceUrl: string;
+  /** Direct media file URL, when a provider also gives a separate listing page URL. */
+  downloadUrl?: string;
   previewUrl: string;
   license: string;
   commercialUse: "UNKNOWN" | "LIKELY_OK" | "NEEDS_REVIEW";

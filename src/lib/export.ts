@@ -44,9 +44,8 @@ async function resolveItems(project: Project): Promise<RenderItem[]> {
       let kind: RenderItem["kind"] = null;
       if (asset) {
         if (asset.hasFile) url = await getFileUrl(asset.id);
-        if (!url && asset.sourceUrl && !isProviderPageUrl(asset.sourceUrl)) {
-          url = asset.sourceUrl;
-        }
+        if (!url) url = asset.downloadUrl || null;
+        if (!url && asset.sourceUrl && !isProviderPageUrl(asset.sourceUrl)) url = asset.sourceUrl;
         // Older projects stored a provider page URL. Use the poster as an image fallback
         // rather than trying to load the HTML page into a video element.
         if (!url) url = asset.previewUrl || null;
@@ -205,14 +204,8 @@ export async function renderSilentVideo(
 
   const starts: number[] = [];
   let acc = 0;
-  for (const s of scenes) {
-    starts.push(acc);
-    acc += Math.max(0.1, s.durationSec || 0.5);
-  }
   // The expanded item list can contain more than one selected asset per scene.
   // Build timing from those exact render items so every selected asset appears.
-  starts.length = 0;
-  acc = 0;
   for (const item of items) {
     starts.push(acc);
     acc += item.durationSec;
@@ -236,7 +229,7 @@ export async function renderSilentVideo(
         return;
       }
       let i = scenes.length - 1;
-      for (let k = 0; k < scenes.length; k++) {
+       for (let k = 0; k < items.length; k++) {
         const start = starts[k] ?? 0;
          const item = items[k];
          const dur = item?.durationSec ?? 0.1;
