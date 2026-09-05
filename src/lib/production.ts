@@ -104,6 +104,19 @@ export function runQc(project: Project): QcIssue[] {
         .join(", ")}${missing.length > 12 ? "…" : ""}`,
     });
 
+  const legacyStock = project.assets.filter(
+    (a) =>
+      !a.hasFile &&
+      !a.downloadUrl &&
+      /^https?:\/\/(www\.)?(pexels|pixabay)\.com\//i.test(a.sourceUrl),
+  );
+  if (legacyStock.length)
+    issues.push({
+      level: "error",
+      title: `${legacyStock.length} older stock selections need re-selection`,
+      detail: "Open the scene, search again, and select the result so its video file can be included in the full export.",
+    });
+
   const notApproved = project.scenes.filter((s) => s.assetIds.length && s.status !== "APPROVED");
   if (notApproved.length)
     issues.push({

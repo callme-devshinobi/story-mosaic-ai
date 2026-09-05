@@ -378,9 +378,14 @@ export function QualityControl({ project }: { project: Project }) {
                 motionPlan: s.motionPlan,
                 transition: s.transition,
                 narration: s.narration,
-                assets: project.assets
+                  assets: project.assets
                   .filter((a) => s.assetIds.includes(a.id))
-                  .map((a) => ({ name: a.name, source: a.source, url: a.sourceUrl })),
+                   .map((a) => ({
+                     name: a.name,
+                     source: a.source,
+                     sourcePage: a.sourceUrl,
+                     mediaUrl: a.downloadUrl || a.sourceUrl,
+                   })),
               })),
             };
             const blob = new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" });
