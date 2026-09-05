@@ -103,6 +103,15 @@ export function AssetLibrary({ project, update }: { project: Project; update: Up
 
   return (
     <div className="space-y-5">
+      <div className="panel flex flex-wrap items-center justify-between gap-3 p-4">
+        <div>
+          <div className="label-caps">Full video export</div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Assemble every selected scene asset into one silent video.
+          </p>
+        </div>
+        <SilentVideoExport project={project} compact />
+      </div>
       {grouped.map(([category, assets]) => (
         <div key={category}>
           <div className="label-caps mb-2">
@@ -329,44 +338,6 @@ export function QualityControl({ project }: { project: Project }) {
   const errors = issues.filter((i) => i.level === "error").length;
   const ready = issues.length === 0;
 
-  const [rendering, setRendering] = useState(false);
-  const [pct, setPct] = useState(0);
-  const [phase, setPhase] = useState("");
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [videoExt, setVideoExt] = useState("webm");
-  const abortRef = useRef<AbortController | null>(null);
-
-  async function onRenderVideo() {
-    setRendering(true);
-    setPct(0);
-    setPhase("Preparing…");
-    setVideoUrl((old) => {
-      if (old) URL.revokeObjectURL(old);
-      return null;
-    });
-    const controller = new AbortController();
-    abortRef.current = controller;
-    try {
-      const { blob, ext } = await renderSilentVideo(
-        project,
-        (p, label) => {
-          setPct(p);
-          setPhase(label);
-        },
-        controller.signal,
-      );
-      setVideoExt(ext);
-      setVideoUrl(URL.createObjectURL(blob));
-      toast.success("Silent video rendered. Download it and finish in CapCut.");
-    } catch (e) {
-      const msg = (e as Error).message;
-      if (msg !== "Export cancelled.") toast.error(msg);
-    } finally {
-      setRendering(false);
-      abortRef.current = null;
-    }
-  }
-
   return (
     <div className="space-y-4">
       <div
@@ -390,47 +361,8 @@ export function QualityControl({ project }: { project: Project }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {videoUrl ? (
-            <Button asChild>
-              <a
-                href={videoUrl}
-                download={`${(project.name || "documentary").replace(/\W+/g, "_")}_Silent.${videoExt}`}
-              >
-                <Download className="size-4" /> Download silent video
-              </a>
-            </Button>
-          ) : (
-            <Button disabled={!!errors || rendering} onClick={onRenderVideo}>
-              <Clapperboard className="size-4" />
-              {rendering ? "Rendering…" : "Render silent video"}
-            </Button>
-          )}
-          {rendering ? (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                abortRef.current?.abort();
-                toast.info("Export cancelled.");
-              }}
-            >
-              <X className="size-4" /> Cancel
-            </Button>
-          ) : null}
+          <SilentVideoExport project={project} disabled={!!errors} />
         </div>
-        {rendering ? (
-          <div className="w-full">
-            <Progress value={pct} />
-            <div className="mt-1 text-xs text-muted-foreground">
-              {phase} — {pct}%. Rendering runs in real time; keep this tab visible.
-            </div>
-          </div>
-        ) : null}
-        {videoUrl ? (
-          <div className="w-full text-xs text-muted-foreground">
-            Rendered {videoExt.toUpperCase()} · silent · import into CapCut for voiceover, music and
-            polish. Render again after changing scenes.
-          </div>
-        ) : null}
         <Button
           variant="secondary"
           disabled={!!errors}
@@ -446,9 +378,14 @@ export function QualityControl({ project }: { project: Project }) {
                 motionPlan: s.motionPlan,
                 transition: s.transition,
                 narration: s.narration,
-                assets: project.assets
+                  assets: project.assets
                   .filter((a) => s.assetIds.includes(a.id))
-                  .map((a) => ({ name: a.name, source: a.source, url: a.sourceUrl })),
+                   .map((a) => ({
+                     name: a.name,
+                     source: a.source,
+                     sourcePage: a.sourceUrl,
+                     mediaUrl: a.downloadUrl || a.sourceUrl,
+                   })),
               })),
             };
             const blob = new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" });
@@ -476,6 +413,98 @@ export function QualityControl({ project }: { project: Project }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function SilentVideoExport({
+  project,
+  compact = false,
+  disabled = false,
+}: {
+  project: Project;
+  compact?: boolean;
+  disabled?: boolean;
+}) {
+  const [rendering, setRendering] = useState(false);
+  const [pct, setPct] = useState(0);
+  const [phase, setPhase] = useState("");
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoExt, setVideoExt] = useState("webm");
+  const abortRef = useRef<AbortController | null>(null);
+
+  async function onRenderVideo() {
+    setRendering(true);
+    setPct(0);
+    setPhase("Preparing selected assets…");
+    setVideoUrl((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return null;
+    });
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const { blob, ext } = await renderSilentVideo(
+        project,
+        (p, label) => {
+          setPct(p);
+          setPhase(label);
+        },
+        controller.signal,
+      );
+      setVideoExt(ext);
+      setVideoUrl(URL.createObjectURL(blob));
+      toast.success("The complete silent video is ready to download.");
+    } catch (e) {
+      const msg = (e as Error).message;
+      if (msg !== "Export cancelled.") toast.error(msg);
+    } finally {
+      setRendering(false);
+      abortRef.current = null;
+    }
+  }
+
+  const filename = `${(project.name || "documentary").replace(/\W+/g, "_")}_Full_Silent.${videoExt}`;
+
+  return (
+    <div className={compact ? "flex flex-wrap items-center gap-2" : "contents"}>
+      {videoUrl ? (
+        <Button asChild>
+          <a href={videoUrl} download={filename}>
+            <Download className="size-4" /> Download full video
+          </a>
+        </Button>
+      ) : (
+        <Button disabled={disabled || rendering} onClick={onRenderVideo}>
+          <Clapperboard className="size-4" />
+          {rendering ? "Rendering…" : compact ? "Render full video" : "Render silent video"}
+        </Button>
+      )}
+      {rendering ? (
+        <Button
+          variant="secondary"
+          onClick={() => {
+            abortRef.current?.abort();
+            toast.info("Export cancelled.");
+          }}
+        >
+          <X className="size-4" /> Cancel
+        </Button>
+      ) : null}
+      {!compact && rendering ? (
+        <div className="w-full">
+          <Progress value={pct} />
+          <div className="mt-1 text-xs text-muted-foreground">
+            {phase} — {pct}%. Rendering runs in real time; keep this tab visible.
+          </div>
+        </div>
+      ) : null}
+      {!compact && videoUrl ? (
+        <div className="w-full text-xs text-muted-foreground">
+          Rendered {videoExt.toUpperCase()} · all selected scene assets · import into CapCut for voiceover,
+          music and polish. Render again after changing scenes.
+        </div>
+      ) : null}
     </div>
   );
 }

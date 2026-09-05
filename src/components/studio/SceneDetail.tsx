@@ -265,13 +265,15 @@ export function SceneDetail({ project, scene, onClose, update }: Props) {
                               category: r.kind === "video" ? "STOCK_VIDEO" : "STOCK_IMAGE",
                               source: r.provider,
                               sourceUrl: r.pageUrl,
+                              // Keep the direct media file URL separately from the provider page.
+                              downloadUrl: r.downloadUrl,
                               previewUrl: r.previewUrl,
                               license: r.license,
                               commercialUse: "NEEDS_REVIEW",
                               attribution: r.author,
                               durationSec: r.durationSec || null,
                               resolution: `${r.width}x${r.height}`,
-                              notes: "Verify current commercial-use rights before publishing.",
+                              notes: `Verify current commercial-use rights before publishing. Source page: ${r.pageUrl}`,
                               hasFile: false,
                               addedAt: new Date().toISOString(),
                             });
