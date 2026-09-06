@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Check, Copy, ExternalLink, Loader2, Search, Sparkles, Upload, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Download,
+  ExternalLink,
+  Loader2,
+  Search,
+  Sparkles,
+  Upload,
+  Trash2,
+} from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +21,7 @@ import { searchStock } from "@/lib/stock.functions";
 import { briefText } from "@/lib/production";
 import { uid } from "@/lib/store";
 import { mediaDuration, putFile } from "@/lib/files";
+import { downloadAsset } from "@/lib/download";
 import type { Asset, AssetCategory, Project, Scene } from "@/lib/types";
 import { AI_TYPES } from "@/lib/types";
 import { PriorityDot, StatusBadge, TypeBadge } from "./primitives";
@@ -386,6 +397,20 @@ export function SceneDetail({ project, scene, onClose, update }: Props) {
                       {a.source} · {a.license}
                     </div>
                   </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    title="Download this asset"
+                    onClick={async () => {
+                      try {
+                        await downloadAsset(a);
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Download failed.");
+                      }
+                    }}
+                  >
+                    <Download className="size-4" />
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => removeAsset(a.id)}>
                     <Trash2 className="size-4" />
                   </Button>
