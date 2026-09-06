@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { fmtDuration, projectStats, runQc } from "@/lib/production";
 import { renderSilentVideo } from "@/lib/export";
 import { mediaDuration } from "@/lib/files";
+import { downloadAsset } from "@/lib/download";
 import type { Project } from "@/lib/types";
 import { StatTile } from "./primitives";
 
@@ -163,6 +164,19 @@ export function AssetLibrary({ project, update }: { project: Project; update: Up
                     </div>
                     <div className="text-xs text-muted-foreground">{a.license}</div>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await downloadAsset(a);
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Download failed.");
+                      }
+                    }}
+                  >
+                    <Download /> Download
+                  </Button>
                   <Button
                     size="sm"
                     variant={a.commercialUse === "LIKELY_OK" ? "secondary" : "default"}
