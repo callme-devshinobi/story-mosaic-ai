@@ -15,7 +15,7 @@ function triggerDownload(url: string, filename: string, revoke = false) {
 function safeName(asset: Asset, url: string) {
   const base = asset.name.replace(/[^\w.\-]+/g, "_").slice(0, 80) || "asset";
   if (/\.[a-z0-9]{2,4}$/i.test(base)) return base;
-  const ext = url.split("?")[0].split(".").pop();
+  const ext = (url.split("?")[0] ?? "").split(".").pop();
   return ext && ext.length <= 4 ? `${base}.${ext}` : base;
 }
 
