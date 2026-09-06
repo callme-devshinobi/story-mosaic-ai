@@ -197,6 +197,54 @@ function ProjectForm({
   );
 }
 
+function NewProjectDialog({ onCreated, onCancel }: { onCreated: (id: string) => void; onCancel: () => void }) {
+  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
+  const [target, setTarget] = useState("25");
+  const [category, setCategory] = useState("Finance");
+  const [style, setStyle] = useState("Cinematic financial documentary");
+  const [audience, setAudience] = useState("");
+  const [script, setScript] = useState("");
+
+  const submit = () => {
+    if (!name.trim()) {
+      toast.error("Name the project first.");
+      return;
+    }
+    const project = createProject({
+      name,
+      videoTitle: title || name,
+      targetMinutes: Number(target) || 25,
+      category,
+      style,
+      audience,
+      script,
+    });
+    onCreated(project.id);
+  };
+
+  return (
+    <ProjectForm
+      name={name}
+      title={title}
+      target={target}
+      category={category}
+      style={style}
+      audience={audience}
+      script={script}
+      setName={setName}
+      setTitle={setTitle}
+      setTarget={setTarget}
+      setCategory={setCategory}
+      setStyle={setStyle}
+      setAudience={setAudience}
+      setScript={setScript}
+      onCancel={onCancel}
+      onSubmit={submit}
+    />
+  );
+}
+
 function Field({ label, value, onChange, placeholder, type = "text" }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
   return <div><Label className="label-caps">{label}</Label><Input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="mt-1" /></div>;
 }
@@ -212,6 +260,7 @@ function Studio({ projectId, projects, onSelect }: { projectId: string; projects
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
   if (!loaded || !project) return null;
 
   const runAnalysis = async () => {
@@ -266,7 +315,7 @@ function Studio({ projectId, projects, onSelect }: { projectId: string; projects
           <NavItem icon={<Check />} label="Quality control" active={view === 'qc'} onClick={() => { setView('qc'); setMobileNav(false); }} />
           <div className="mt-auto border-t border-border pt-3">
             {projects.length > 1 ? projects.filter((p) => p.id !== project.id).map((p) => <NavItem key={p.id} icon={<FolderOpen />} label={`Open ${p.name}`} onClick={() => { onSelect(p.id); setMobileNav(false); }} />) : null}
-            <NavItem icon={<Plus />} label="New project" onClick={() => { setMobileNav(false); toast.info("Use the browser back button to start another local project."); }} />
+            <NavItem icon={<Plus />} label="New project" onClick={() => { setMobileNav(false); setNewProjectOpen(true); }} />
           </div>
         </aside>
         <main className="min-w-0 flex-1 p-4 sm:p-7 lg:p-10">
@@ -283,6 +332,7 @@ function Studio({ projectId, projects, onSelect }: { projectId: string; projects
         </main>
       </div>
       <SceneDetail project={project} scene={selectedScene ? project.scenes.find(s => s.id === selectedScene.id) ?? null : null} onClose={() => setSelectedScene(null)} update={update} />
+      {newProjectOpen ? <NewProjectDialog onCancel={() => setNewProjectOpen(false)} onCreated={(id) => { setNewProjectOpen(false); onSelect(id); }} /> : null}
     </div>
   );
 }
