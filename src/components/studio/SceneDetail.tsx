@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  Check,
-  Copy,
-  ExternalLink,
-  Loader2,
-  Search,
-  Sparkles,
-  Upload,
-  Trash2,
-} from "lucide-react";
+import { Check, Copy, ExternalLink, Loader2, Search, Sparkles, Upload, Trash2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -79,7 +70,11 @@ export function SceneDetail({ project, scene, onClose, update }: Props) {
       p.assets.push(asset);
       p.scenes = p.scenes.map((s) =>
         s.id === scene.id
-          ? { ...s, assetIds: [...s.assetIds, asset.id], status: s.status === "PENDING" ? "UPLOADED" : s.status }
+          ? {
+              ...s,
+              assetIds: [...s.assetIds, asset.id],
+              status: s.status === "PENDING" ? "UPLOADED" : s.status,
+            }
           : s,
       );
       return p;
@@ -282,12 +277,7 @@ export function SceneDetail({ project, scene, onClose, update }: Props) {
                         >
                           Select
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-7 text-xs"
-                          asChild
-                        >
+                        <Button size="sm" variant="secondary" className="h-7 text-xs" asChild>
                           <a href={r.pageUrl} target="_blank" rel="noreferrer noopener">
                             <ExternalLink className="size-3" />
                           </a>
@@ -353,8 +343,8 @@ export function SceneDetail({ project, scene, onClose, update }: Props) {
               ) : (
                 <div className="panel p-4 text-sm text-muted-foreground">
                   <Sparkles className="mb-2 size-4 text-primary" />
-                  This scene is planned as {scene.visualType.replace(/_/g, " ").toLowerCase()}, so no
-                  AI generation brief was produced. You can still write your own prompt below.
+                  This scene is planned as {scene.visualType.replace(/_/g, " ").toLowerCase()}, so
+                  no AI generation brief was produced. You can still write your own prompt below.
                   <Textarea
                     className="mt-2 font-mono text-xs"
                     placeholder="Write a generation prompt…"

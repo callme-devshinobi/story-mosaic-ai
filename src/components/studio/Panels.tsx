@@ -1,5 +1,13 @@
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clapperboard, Download, FileWarning, Music, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clapperboard,
+  Download,
+  FileWarning,
+  Music,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -22,9 +30,12 @@ export function Dashboard({ project }: { project: Project }) {
       <div className="panel p-5">
         <div className="label-caps">Production status</div>
         <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
-          <h2 className="font-display text-2xl font-semibold">{project.videoTitle || project.name}</h2>
+          <h2 className="font-display text-2xl font-semibold">
+            {project.videoTitle || project.name}
+          </h2>
           <span className="font-mono text-sm text-muted-foreground">
-            {fmtDuration(s.duration)} timeline · target {project.targetMinutes}:00 · {project.aspectRatio}
+            {fmtDuration(s.duration)} timeline · target {project.targetMinutes}:00 ·{" "}
+            {project.aspectRatio}
           </span>
         </div>
         <Progress value={pct} className="mt-4" />
@@ -35,8 +46,16 @@ export function Dashboard({ project }: { project: Project }) {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label="Scenes" value={s.total} hint={`${s.complete} complete`} />
-        <StatTile label="AI images" value={`${s.aiImages.done}/${s.aiImages.total}`} tone="primary" />
-        <StatTile label="AI videos" value={`${s.aiVideos.done}/${s.aiVideos.total}`} tone="primary" />
+        <StatTile
+          label="AI images"
+          value={`${s.aiImages.done}/${s.aiImages.total}`}
+          tone="primary"
+        />
+        <StatTile
+          label="AI videos"
+          value={`${s.aiVideos.done}/${s.aiVideos.total}`}
+          tone="primary"
+        />
         <StatTile label="Stock" value={`${s.stock.done}/${s.stock.total}`} />
         <StatTile label="Graphics" value={`${s.graphics.done}/${s.graphics.total}`} />
         <StatTile
@@ -124,7 +143,11 @@ export function AssetLibrary({ project, update }: { project: Project; update: Up
               return (
                 <div key={a.id} className="flex flex-wrap items-center gap-3 p-3 text-sm">
                   {a.previewUrl ? (
-                    <img src={a.previewUrl} alt={a.name} className="h-12 w-20 rounded object-cover" />
+                    <img
+                      src={a.previewUrl}
+                      alt={a.name}
+                      className="h-12 w-20 rounded object-cover"
+                    />
                   ) : (
                     <div className="flex h-12 w-20 items-center justify-center rounded bg-surface-2 text-[10px] text-muted-foreground">
                       FILE
@@ -185,8 +208,12 @@ export function FactCheck({ project, update }: { project: Project; update: Updat
         return (
           <div key={c.id} className="space-y-2 p-3">
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              {scene ? <span className="font-mono">SCENE {String(scene.index).padStart(3, "0")}</span> : null}
-              <span className="rounded-full border border-border px-2 py-0.5">{c.kind || "claim"}</span>
+              {scene ? (
+                <span className="font-mono">SCENE {String(scene.index).padStart(3, "0")}</span>
+              ) : null}
+              <span className="rounded-full border border-border px-2 py-0.5">
+                {c.kind || "claim"}
+              </span>
               <span
                 className={
                   c.status === "VERIFIED"
@@ -276,7 +303,8 @@ export function Timeline({ project, update }: { project: Project; update: Update
       {project.voiceover?.durationSec ? (
         <div className="panel flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
           <span>
-            Voiceover {fmtDuration(project.voiceover.durationSec)} vs timeline {fmtDuration(s.duration)}
+            Voiceover {fmtDuration(project.voiceover.durationSec)} vs timeline{" "}
+            {fmtDuration(s.duration)}
           </span>
           <Button
             variant="secondary"
@@ -379,14 +407,14 @@ export function QualityControl({ project }: { project: Project }) {
                 motionPlan: s.motionPlan,
                 transition: s.transition,
                 narration: s.narration,
-                  assets: project.assets
+                assets: project.assets
                   .filter((a) => s.assetIds.includes(a.id))
-                   .map((a) => ({
-                     name: a.name,
-                     source: a.source,
-                     sourcePage: a.sourceUrl,
-                     mediaUrl: a.downloadUrl || a.sourceUrl,
-                   })),
+                  .map((a) => ({
+                    name: a.name,
+                    source: a.source,
+                    sourcePage: a.sourceUrl,
+                    mediaUrl: a.downloadUrl || a.sourceUrl,
+                  })),
               })),
             };
             const blob = new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" });
@@ -502,8 +530,8 @@ function SilentVideoExport({
       ) : null}
       {!compact && videoUrl ? (
         <div className="w-full text-xs text-muted-foreground">
-          Rendered {videoExt.toUpperCase()} · all selected scene assets · import into CapCut for voiceover,
-          music and polish. Render again after changing scenes.
+          Rendered {videoExt.toUpperCase()} · all selected scene assets · import into CapCut for
+          voiceover, music and polish. Render again after changing scenes.
         </div>
       ) : null}
     </div>

@@ -51,10 +51,7 @@ async function resolveItems(project: Project): Promise<RenderItem[]> {
         // rather than trying to load the HTML page into a video element.
         if (!url) url = asset.previewUrl || null;
         if (url) {
-          kind =
-            asset.category.includes("VIDEO") && !isImageUrl(url)
-              ? "video"
-              : "image";
+          kind = asset.category.includes("VIDEO") && !isImageUrl(url) ? "video" : "image";
         }
       }
       items.push({ scene, url, kind, durationSec });
@@ -258,14 +255,14 @@ export async function renderSilentVideo(
       const pct = Math.round((t / total) * 100);
       if (pct !== lastPct) {
         lastPct = pct;
-         onProgress(
-           pct,
-           `Rendering scene ${item.scene.index} of ${scenes.length}${
-             items.filter((candidate) => candidate.scene.id === item.scene.id).length > 1
-               ? " · selected clip"
-               : ""
-           }`,
-         );
+        onProgress(
+          pct,
+          `Rendering scene ${item.scene.index} of ${scenes.length}${
+            items.filter((candidate) => candidate.scene.id === item.scene.id).length > 1
+              ? " · selected clip"
+              : ""
+          }`,
+        );
       }
       requestAnimationFrame(frame);
     };
