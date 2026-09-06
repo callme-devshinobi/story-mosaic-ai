@@ -86,6 +86,7 @@ export function Dashboard({ project }: { project: Project }) {
 }
 
 export function AssetLibrary({ project, update }: { project: Project; update: Update }) {
+  const exportBlocked = runQc(project).some((issue) => issue.level === "error");
   const grouped = useMemo(() => {
     const map = new Map<string, typeof project.assets>();
     project.assets.forEach((a) => {
@@ -110,7 +111,7 @@ export function AssetLibrary({ project, update }: { project: Project; update: Up
             Assemble every selected scene asset into one silent video.
           </p>
         </div>
-        <SilentVideoExport project={project} compact />
+        <SilentVideoExport project={project} compact disabled={exportBlocked} />
       </div>
       {grouped.map(([category, assets]) => (
         <div key={category}>
