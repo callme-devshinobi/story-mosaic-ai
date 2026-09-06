@@ -33,7 +33,9 @@ export function projectStats(project: Project) {
   };
 
   const aiImages = group((s) => s.visualType === "AI_IMAGE");
-  const aiVideos = group((s) => s.visualType === "AI_VIDEO" || s.visualType === "ABSTRACT_CINEMATIC");
+  const aiVideos = group(
+    (s) => s.visualType === "AI_VIDEO" || s.visualType === "ABSTRACT_CINEMATIC",
+  );
   const stock = group((s) => STOCK_TYPES.includes(s.visualType));
   const graphics = group((s) => GRAPHIC_TYPES.includes(s.visualType));
 
@@ -70,7 +72,8 @@ export function projectStats(project: Project) {
     licenseReview,
     disclosure,
     mix,
-    needsAi: scenes.filter((s) => AI_TYPES.includes(s.visualType) && s.status !== "APPROVED").length,
+    needsAi: scenes.filter((s) => AI_TYPES.includes(s.visualType) && s.status !== "APPROVED")
+      .length,
     needsStock: scenes.filter((s) => STOCK_TYPES.includes(s.visualType) && s.status !== "APPROVED")
       .length,
   };
@@ -114,7 +117,8 @@ export function runQc(project: Project): QcIssue[] {
     issues.push({
       level: "error",
       title: `${legacyStock.length} older stock selections need re-selection`,
-      detail: "Open the scene, search again, and select the result so its video file can be included in the full export.",
+      detail:
+        "Open the scene, search again, and select the result so its video file can be included in the full export.",
     });
 
   const notApproved = project.scenes.filter((s) => s.assetIds.length && s.status !== "APPROVED");
